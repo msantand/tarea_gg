@@ -5,22 +5,39 @@ import (
 	"net/http"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"log"
+	"github.com/msantand/tarea_gg"
+	"io/ioutil"
 )
 
-type Server struct {
-	database *database.Database
+type ServerCities struct {
+	databaseCities *database.DbCities
 }
 
-func New(database *database.Database) *Server {
-	return &Server{
-		database: database,
+func NewServerCities(database *database.DbCities) *ServerCities {
+	return &ServerCities{
+		databaseCities: database,
 	}
 }
 
-func (server *Server) EntryList(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(server.database.EntryList(), "", "  ")
+func (server *ServerCities) PostCity(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	city := grb.City{}
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Errorf("error: %s", err)
+		return
+	}
+	json.Unmarshal(b, &city)
+	server.databaseCities.AddCity(grb.NewCity(city.Name))
+
+	j, _ := json.Marshal(city)
+	w.Write(j)
+}
+
+
+func (server *ServerCities) CityList(w http.ResponseWriter, r *http.Request) {
+	data, err := json.MarshalIndent(server.databaseCities.CityList(), "", "  ")
 	if err != nil {
 		fmt.Errorf("error: %s", err)
 		return
@@ -31,20 +48,39 @@ func (server *Server) EntryList(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func (server *Server) EntryGet(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["key"]
+//------------------Connections--------------------------------------
 
-	entry, err := server.database.EntryGet(key)
+type ServerConnection struct {
+	databaseConnection *database.DbConnections
+}
+
+func NewServerConnection (database *database.DbConnections) *ServerConnection {
+	return &ServerConnection{
+		databaseConnection: database,
+	}
+}
+
+func (server *ServerConnection) PostConnection(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	connection := grb.Connection{}
+
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("error: %s\n", err)
-		w.WriteHeader(http.StatusNotFound)
+		fmt.Errorf("error: %s", err)
 		return
 	}
+	json.Unmarshal(b, &connection)
+	server.databaseConnection.AddConnection(grb.NewConnection(connection.From,connection.To,connection.Cost))
 
-	data, err := json.MarshalIndent(entry, "", "  ")
+	j, _ := json.Marshal(connection)
+	w.Write(j)
+}
+
+
+func (server *ServerConnection) ConnectionList(w http.ResponseWriter, r *http.Request) {
+	data, err := json.MarshalIndent(server.databaseConnection.ConnectionList(), "", "  ")
 	if err != nil {
-		log.Printf("error: %s\n", err)
+		fmt.Errorf("error: %s", err)
 		return
 	}
 

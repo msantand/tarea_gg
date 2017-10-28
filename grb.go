@@ -1,33 +1,32 @@
 package grb
 
-import (
-	"time"
-	"github.com/Pallinder/go-randomdata"
-	"strings"
-)
-
-type Author struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+type City struct {
+	Name string `json:"name"`
 }
 
-type Entry struct {
-	Key        string    `json:"key"`
-	Title      string    `json:"title"`
-	Content    string    `json:"content"`
-	CreateDate time.Time `json:"create_date"`
-	Author     Author    `json:"author"`
+type Connection struct {
+	From    string    `json:"from"`
+	To      string    `json:"to"`
+	Cost    int    	  `json:"cost"`
 }
 
-func NewFakeEntry() *Entry {
-	return &Entry{
-		Key:        strings.ToLower(randomdata.Letters(12)),
-		Title:      randomdata.Title(0),
-		Content:    randomdata.Letters(100),
-		CreateDate: time.Now(),
-		Author: Author{
-			Username: randomdata.SillyName(),
-			Email:    randomdata.Email(),
-		},
+
+type Solve struct {
+    Cost    string
+    Path    []string
+
+}
+
+func NewCity(newCity string) *City {
+	return &City{
+		Name: newCity,
+	}
+}
+
+func NewConnection(c1 string, c2 string, cost int) *Connection {
+	return &Connection{
+		From: c1,
+		To:   c2,
+		Cost: cost,
 	}
 }

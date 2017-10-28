@@ -3,31 +3,49 @@ package main
 import (
 	"net/http"
 	"github.com/gorilla/mux"
-	"github.com/msantand/tarea_gg"
 	"github.com/msantand/tarea_gg/database"
 	"github.com/msantand/tarea_gg/server"
 )
 
 func main() {
-	db := database.New()
-	db.AddEntry(grb.NewFakeEntry())
-	db.AddEntry(grb.NewFakeEntry())
-	db.AddEntry(grb.NewFakeEntry())
-
-	myServer := server.New(db)
+	dbCities := database.NewDbCities()
+	myServerCities := server.NewServerCities(dbCities)
 
 	router := mux.NewRouter()
 	router.NewRoute().
-		Path("/").
-		HandlerFunc(myServer.EntryList).
+		Path("/cities").
+		HandlerFunc(myServerCities.CityList).
 		Methods("GET").
-		Name("EntryList")
+		Name("CitiesList")
 
 	router.NewRoute().
-		Path("/{key}").
-		HandlerFunc(myServer.EntryGet).
-		Methods("GET").
-		Name("EntryGet")
+		Path("/cities").
+		HandlerFunc(myServerCities.PostCity).
+		Methods("POST").
+		Name("AddingCity")
 
+
+
+	dbConnection := database.NewDbConnection()
+	myServerConnection := server.NewServerConnection(dbConnection)
+
+	router.NewRoute().
+		Path("/connections").
+		HandlerFunc(myServerConnection.PostConnection).
+		Methods("POST").
+		Name("AddingConnection")
+
+	router.NewRoute().
+		Path("/connections").
+		HandlerFunc(myServerConnection.ConnectionList).
+		Methods("GET").
+		Name("ConnectionList")
+/*
+	router.NewRoute().
+		Path("/solve/?from={name}&to={name}").
+		HandlerFunc(myServerCities.CityList).
+		Methods("GET").
+		Name("CitiesList")
+*/
 	http.ListenAndServe(":8000", router)
 }
