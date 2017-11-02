@@ -2,7 +2,8 @@ package database
 
 import (
 	"github.com/msantand/tarea_gg"
-	"errors"
+	_ "errors"
+	"fmt"
 )
 
 type DbCities struct {
@@ -30,30 +31,52 @@ func (db *DbCities) CityList() []string {
 	return cities
 }
 
-func (db *DbCities) CityGet(key string) (*grb.City, error) {
-	value, ok := db.cities[key]
-	if !ok {
-		return nil, errors.New("city not found")
-	}
-	return value, nil
-}
-
 //----------------------------------------------------------------------------------------------------
 
 type DbConnections struct {
-	connections map[string]*grb.Connection
+	connections map[grb.Destination]*grb.Connection
 }
 
 func NewDbConnection() *DbConnections {
 	return &DbConnections{
-		connections: make(map[string]*grb.Connection),
+		connections: make(map[grb.Destination]*grb.Connection),
 	}
 }
 
 func (db *DbConnections) AddConnection(connection *grb.Connection) {
-	db.connections[connection.From] = connection
+	destination := grb.Destination{
+		Dest1: connection.From,
+		Dest2: connection.To,
+	}
+	fmt.Println(destination)
+	flag, key := db.SameConnection(destination)
+	fmt.Println(key)
+	if  flag{
+		fmt.Println("entre aki")
+		db.connections[key].Cost = connection.Cost
+		return
+	}
+	db.connections[destination] = connection
 }
 
+func (db *DbConnections) SameConnection(destination grb.Destination) (bool, grb.Destination){
+	for key := range db.connections{
+		if CompareDestination(destination, key){
+			return true, key
+		}
+	}
+	return false, grb.Destination{}
+}
+
+func CompareDestination(dest1 grb.Destination, dest2 grb.Destination) bool{
+	if dest1 == dest2{
+		return true
+	}
+	if (dest1.Dest1 == dest2.Dest2) && (dest1.Dest2 == dest2.Dest1){
+		return true
+	}
+	return false
+}
 
 func (db *DbConnections) ConnectionList() []*grb.Connection {
 	cities := make([]*grb.Connection, len(db.connections))

@@ -9,35 +9,33 @@ import (
 
 func main() {
 	dbCities := database.NewDbCities()
-	myServerCities := server.NewServerCities(dbCities)
+	dbConnection := database.NewDbConnection()
+
+
+	myServer := server.NewServer(dbCities, dbConnection)
 
 	router := mux.NewRouter()
 	router.NewRoute().
 		Path("/cities").
-		HandlerFunc(myServerCities.CityList).
+		HandlerFunc(myServer.CityList).
 		Methods("GET").
 		Name("CitiesList")
 
 	router.NewRoute().
 		Path("/cities").
-		HandlerFunc(myServerCities.PostCity).
+		HandlerFunc(myServer.PostCity).
 		Methods("POST").
 		Name("AddingCity")
 
-
-
-	dbConnection := database.NewDbConnection()
-	myServerConnection := server.NewServerConnection(dbConnection)
-
 	router.NewRoute().
 		Path("/connections").
-		HandlerFunc(myServerConnection.PostConnection).
+		HandlerFunc(myServer.PostConnection).
 		Methods("POST").
 		Name("AddingConnection")
 
 	router.NewRoute().
 		Path("/connections").
-		HandlerFunc(myServerConnection.ConnectionList).
+		HandlerFunc(myServer.ConnectionList).
 		Methods("GET").
 		Name("ConnectionList")
 /*

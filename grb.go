@@ -4,6 +4,10 @@ type City struct {
 	Name string `json:"name"`
 }
 
+type Destination struct {
+	Dest1, Dest2 string
+}
+
 type Connection struct {
 	From    string    `json:"from"`
 	To      string    `json:"to"`
@@ -14,7 +18,6 @@ type Connection struct {
 type Solve struct {
     Cost    string
     Path    []string
-
 }
 
 func NewCity(newCity string) *City {
@@ -30,3 +33,5 @@ func NewConnection(c1 string, c2 string, cost int) *Connection {
 		Cost: cost,
 	}
 }
+
+

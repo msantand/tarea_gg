@@ -7,19 +7,38 @@ import (
 	"fmt"
 	"github.com/msantand/tarea_gg"
 	"io/ioutil"
+	_ "encoding/asn1"
 )
 
-type ServerCities struct {
-	databaseCities *database.DbCities
+
+type Server struct {
+	ServerCities
+	ServerConnections
+	Matrix [10][10]int
 }
 
-func NewServerCities(database *database.DbCities) *ServerCities {
-	return &ServerCities{
-		databaseCities: database,
+type ServerCities struct {
+	databaseCities 		*database.DbCities
+}
+
+type ServerConnections struct {
+	databaseConnections *database.DbConnections
+}
+
+//----------------------------------
+
+func NewServer(dbCities *database.DbCities, dbConnections *database.DbConnections) *Server {
+	return &Server{
+			ServerCities: ServerCities{
+				databaseCities: dbCities,
+			},
+			ServerConnections: ServerConnections{
+				databaseConnections: dbConnections,
+			},
 	}
 }
 
-func (server *ServerCities) PostCity(w http.ResponseWriter, r *http.Request) {
+func (server *Server) PostCity(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	city := grb.City{}
 
@@ -29,15 +48,20 @@ func (server *ServerCities) PostCity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.Unmarshal(b, &city)
-	server.databaseCities.AddCity(grb.NewCity(city.Name))
+
+	if city.Name == ""{
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	server.ServerCities.databaseCities.AddCity(grb.NewCity(city.Name))
 
 	j, _ := json.Marshal(city)
 	w.Write(j)
 }
 
 
-func (server *ServerCities) CityList(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(server.databaseCities.CityList(), "", "  ")
+func (server *Server) CityList(w http.ResponseWriter, r *http.Request) {
+	data, err := json.MarshalIndent(server.ServerCities.databaseCities.CityList(), "", "  ")
 	if err != nil {
 		fmt.Errorf("error: %s", err)
 		return
@@ -50,17 +74,8 @@ func (server *ServerCities) CityList(w http.ResponseWriter, r *http.Request) {
 
 //------------------Connections--------------------------------------
 
-type ServerConnection struct {
-	databaseConnection *database.DbConnections
-}
 
-func NewServerConnection (database *database.DbConnections) *ServerConnection {
-	return &ServerConnection{
-		databaseConnection: database,
-	}
-}
-
-func (server *ServerConnection) PostConnection(w http.ResponseWriter, r *http.Request) {
+func (server *Server) PostConnection(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	connection := grb.Connection{}
 
@@ -70,15 +85,35 @@ func (server *ServerConnection) PostConnection(w http.ResponseWriter, r *http.Re
 		return
 	}
 	json.Unmarshal(b, &connection)
-	server.databaseConnection.AddConnection(grb.NewConnection(connection.From,connection.To,connection.Cost))
+
+
+	cities := server.ServerCities.databaseCities.CityList()
+
+	flagTo := false
+	flagFrom := false
+
+	for _, v := range cities {
+		if v == connection.From  {
+			flagFrom = true
+		}
+		if v == connection.To{
+			flagTo = true
+		}
+	}
+	if !(flagFrom && flagTo) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	server.ServerConnections.databaseConnections.AddConnection(grb.NewConnection(connection.From,connection.To,connection.Cost))
 
 	j, _ := json.Marshal(connection)
 	w.Write(j)
 }
 
 
-func (server *ServerConnection) ConnectionList(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(server.databaseConnection.ConnectionList(), "", "  ")
+func (server *Server) ConnectionList(w http.ResponseWriter, r *http.Request) {
+	data, err := json.MarshalIndent(server.ServerConnections.databaseConnections.ConnectionList(), "", "  ")
 	if err != nil {
 		fmt.Errorf("error: %s", err)
 		return
